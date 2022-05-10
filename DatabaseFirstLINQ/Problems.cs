@@ -32,9 +32,11 @@ namespace DatabaseFirstLINQ
             //ProblemFifteen();
             //ProblemSixteen();
             //ProblemSeventeen();
-            ProblemEighteen();
+            //ProblemEighteen();
             //ProblemNineteen();
             //ProblemTwenty();
+            //BonusTwo();
+            BonusThree();
         }
 
         // <><><><><><><><> R Actions (Read) <><><><><><><><><>
@@ -288,22 +290,54 @@ namespace DatabaseFirstLINQ
         private void ProblemTwenty()
         {
             // Delete the user with the email "oda@gmail.com" from the Users table using LINQ.
+            var odaUser = _context.Users.Where(u => u.Email == "oda@gmail.com").SingleOrDefault();
+            _context.Users.Remove(odaUser);
+            _context.SaveChanges();
 
         }
 
         // <><><><><><><><> BONUS PROBLEMS <><><><><><><><><>
 
-        private void BonusOne()
+        private User BonusOne()
         {
             // Prompt the user to enter in an email and password through the console.
             // Take the email and password and check if the there is a person that matches that combination.
             // Print "Signed In!" to the console if they exists and the values match otherwise print "Invalid Email or Password.".
+
+            Console.Write("Please enter your email: ");
+            string emailInput = Console.ReadLine();
+            Console.Write("Please enter your password: ");
+            string passwordInput = Console.ReadLine();
+
+            var validUser = _context.Users.Where(u => u.Email == emailInput && u.Password == passwordInput).SingleOrDefault();
+
+            if (validUser == null)
+            {
+                Console.WriteLine("\nInvalid Email or Password\n");
+                return null;
+            } else
+            {
+                Console.WriteLine("\nSigned In!\n");
+                return validUser;
+            }
         }
 
         private void BonusTwo()
         {
             // Write a query that finds the total of every users shopping cart products using LINQ.
-            // Display the total of each users shopping cart as well as the total of the toals to the console.
+            // Display the total of each users shopping cart as well as the total of the totals to the console.
+
+            var users = _context.Users.ToList();
+
+            decimal totalSum = 0m;
+            foreach (var user in users)
+            {
+                var shoppingCartSum = _context.ShoppingCarts.Include(sc => sc.Product).Where(sc=>sc.UserId == user.Id).Select(sc => sc.Product.Price).Sum();
+                totalSum += shoppingCartSum;
+                Console.WriteLine($"User: {user.Email}\t\t\tShopping Cart Total: ${shoppingCartSum}");
+            }
+            Console.WriteLine($"\nTotal Sum of Shopping Carts: ${totalSum}");
+
         }
 
         // BIG ONE
@@ -316,9 +350,81 @@ namespace DatabaseFirstLINQ
             // View all products in the Products table
             // Add a product to the shopping cart (incrementing quantity if that product is already in their shopping cart)
             // Remove a product from their shopping cart
-            // 3. If the user does not succesfully sing in
+            // 3. If the user does not succesfully sign in
             // a. Display "Invalid Email or Password"
             // b. Re-prompt the user for credentials
+
+            Console.WriteLine("Welcome to the Console Store. Please sign in...");
+            User user = null;
+            while (user == null)
+            {
+                user = BonusOne();
+            }
+            Console.WriteLine($"Welcome {user.Email}");
+
+            bool signedOut = false;
+            while (!signedOut)
+            {
+                Console.WriteLine("Please select from the following options:" +
+                    "\n\n\t(1) View shopping cart" +
+                    "\n\t(2) View products" +
+                    "\n\t(3) Add Product To Cart" +
+                    "\n\t(4) Remove Product From Cart" +
+                    "\n\t(5) Sign Out\n\n");
+                string optionChoice = Console.ReadLine();
+                switch (optionChoice)
+                {
+                    case "1":
+                        Console.WriteLine($"\n\n{user.Email}'s Shopping Cart");
+                        var userCart = _context.ShoppingCarts.Include(sh => sh.Product).Where(sh => sh.UserId == user.Id);
+                        foreach (var product in userCart)
+                        {
+                            Console.WriteLine($"Name: {product.Product.Name}\nPrice: {product.Product.Price}\nQuantity: {product.Quantity}\n\n");
+                        }
+                        Console.WriteLine();
+                        break;
+                    case "2":
+                        Console.WriteLine("PRODUCTS");
+                        var products = _context.Products;
+                        foreach (var product in products)
+                        {
+                            Console.WriteLine($"Name: {product.Name}\nPrice: ${product.Price}\n\n");
+                        }
+                        Console.WriteLine();
+                        break;
+                    case "3":
+                        Console.WriteLine("Please enter the name of the product you'd like to add to your cart.");
+                        string inputProductName = Console.ReadLine();
+
+                        var chosenProduct = _context.Products.Where(p => p.Name.ToLower() == inputProductName.ToLower()).SingleOrDefault();
+                        if (chosenProduct != null)
+                        {
+                            ShoppingCart newCartItem = new ShoppingCart()
+                            {
+                                UserId = user.Id,
+                                ProductId = chosenProduct.Id,
+                                Quantity = 1
+                            };
+                            _context.ShoppingCarts.Add(newCartItem);
+                            _context.SaveChanges();
+                        } else
+                        {
+                            Console.WriteLine($"We dont sell a {inputProductName} here. Better try Amazon...\n");
+                        }
+                        break;
+                    case "4":
+                        break;
+                    case "5":
+                        Console.WriteLine("Goodbye!");
+                        signedOut = true;
+                        break;
+                    default:
+                        Console.WriteLine("That's not a valid choice idiot");
+                        break;
+                }
+            }
+
+
 
         }
 
