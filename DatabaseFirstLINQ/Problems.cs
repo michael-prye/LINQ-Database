@@ -20,13 +20,13 @@ namespace DatabaseFirstLINQ
             //ProblemThree();
             //ProblemFour();
             //ProblemFive();
-            ProblemSix();
+            //ProblemSix();
             //ProblemSeven();
             //ProblemEight();
             //ProblemNine();
             //ProblemTen();
             //ProblemEleven();
-            //ProblemTwelve();
+            ProblemTwelve();
             //ProblemThirteen();
             //ProblemFourteen();
             //ProblemFifteen();
@@ -131,6 +131,12 @@ namespace DatabaseFirstLINQ
             // Write a LINQ query that retreives all of the products in the shopping cart of the user who has the email "afton@gmail.com".
             // Then print the product's name, price, and quantity to the console.
 
+            var aftonsCart = _context.ShoppingCarts.Include(sh => sh.Product).Include(sh => sh.User).Where(sh => sh.User.Email == "afton@gmail.com");
+            foreach (var product in aftonsCart)
+            {
+                Console.WriteLine($"Name: {product.Product.Name}\tPrice: {product.Product.Price}\tQuantity: {product.Quantity}");
+            }
+
         }
 
         private void ProblemNine()
@@ -139,6 +145,9 @@ namespace DatabaseFirstLINQ
             // HINT: End of query will be: .Select(sc => sc.Product.Price).Sum();
             // Then print the total of the shopping cart to the console.
 
+            var odasCartSum = _context.ShoppingCarts.Include(sh => sh.User).Include(sh => sh.Product).Where(sh => sh.User.Email == "oda@gmail.com").Select(sh => sh.Product.Price).Sum();
+            Console.WriteLine($"Sum of products in Oda's Shopping Cart: ${odasCartSum}");
+
         }
 
         private void ProblemTen()
@@ -146,6 +155,13 @@ namespace DatabaseFirstLINQ
             // Write a LINQ query that retreives all of the products in the shopping cart of users who have the role of "Employee".
             // Then print the user's email as well as the product's name, price, and quantity to the console.
 
+            var employeeEmails = _context.UserRoles.Include(ur => ur.User).Include(ur => ur.Role).Where(ur => ur.Role.RoleName == "employee").Select(ur => ur.User.Email).ToList();
+            var employeeShoppingCarts = _context.ShoppingCarts.Include(sh => sh.User).Include(sh => sh.Product).Where(sh => employeeEmails.Contains(sh.User.Email));
+
+            foreach (var employeeShoppingCartItem in employeeShoppingCarts)
+            {
+                Console.WriteLine($"Email: {employeeShoppingCartItem.User.Email}\nProduct: {employeeShoppingCartItem.Product.Name}\nPrice: {employeeShoppingCartItem.Product.Price}\nQuantity: {employeeShoppingCartItem.Quantity}\n\n");
+            }
         }
 
         // <><><><><><><><> CUD (Create, Update, Delete) Actions <><><><><><><><><>
@@ -167,6 +183,14 @@ namespace DatabaseFirstLINQ
         private void ProblemTwelve()
         {
             // Create a new Product object and add that product to the Products table using LINQ.
+            Product product = new Product()
+            {
+                Name = "Barack Obama NFT Collection",
+                Description = "Barack Obama in non-fungible form babyyyyyy",
+                Price = 100000000000.00m
+            };
+            _context.Products.Add(product);
+            _context.SaveChanges();
 
         }
 
