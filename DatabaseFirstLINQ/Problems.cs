@@ -399,20 +399,47 @@ namespace DatabaseFirstLINQ
                         var chosenProduct = _context.Products.Where(p => p.Name.ToLower() == inputProductName.ToLower()).SingleOrDefault();
                         if (chosenProduct != null)
                         {
-                            ShoppingCart newCartItem = new ShoppingCart()
+
+                            var shoppingCartItem = _context.ShoppingCarts.Include(sh => sh.Product).Where(p => p.Product.Name.ToLower() == inputProductName.ToLower()).SingleOrDefault();
+                            if (shoppingCartItem != null)
                             {
-                                UserId = user.Id,
-                                ProductId = chosenProduct.Id,
-                                Quantity = 1
-                            };
-                            _context.ShoppingCarts.Add(newCartItem);
-                            _context.SaveChanges();
+                                shoppingCartItem.Quantity += 1;
+                                _context.ShoppingCarts.Update(shoppingCartItem);
+                                _context.SaveChanges();
+                            }
+                            else
+                            {
+                                ShoppingCart newCartItem = new ShoppingCart()
+                                {
+                                    UserId = user.Id,
+                                    ProductId = chosenProduct.Id,
+                                    Quantity = 1
+                                };
+                                _context.ShoppingCarts.Add(newCartItem);
+                                _context.SaveChanges();
+                            }
+
+                           
                         } else
                         {
                             Console.WriteLine($"We dont sell a {inputProductName} here. Better try Amazon...\n");
                         }
                         break;
                     case "4":
+                        Console.WriteLine("Please enter the name of the product you would like to delete");
+                        string inputProduct = Console.ReadLine();
+                        var deleteShoppingCartItem = _context.ShoppingCarts.Include(sh => sh.Product).Where(p => p.Product.Name.ToLower() == inputProduct.ToLower()).SingleOrDefault();
+                        if (deleteShoppingCartItem != null)
+                        {
+                            _context.ShoppingCarts.Remove(deleteShoppingCartItem);
+                            _context.SaveChanges();
+                        }
+                        else
+                        {
+                            Console.WriteLine($"That item is not in your shopping cart...\n");
+                        }
+
+
                         break;
                     case "5":
                         Console.WriteLine("Goodbye!");
